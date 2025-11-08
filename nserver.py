@@ -1,3 +1,4 @@
+import os  # <-- Added for Render port
 import numpy as np
 from flask import Flask, request
 from flask_socketio import SocketIO, emit
@@ -57,7 +58,7 @@ except Exception as e:
 # Stores dynamic sequence data for each client (by session ID)
 client_dynamic_sequences = defaultdict(lambda: deque(maxlen=MAX_LEN))
 
-# NEW: Stores static state for each client (by session ID)
+# **FIXED**: Stores static state for each client (by session ID)
 def new_static_state():
     """Helper to create a new, blank state for a static user."""
     return {
@@ -147,6 +148,12 @@ def predict_static_from_coords(sid, coords_flat):
 def handle_connect(auth=None):
     sid = request.sid
     print(f"Client connected: {sid}")
+    # Send model info as soon as client connects
+    emit('model_info', {
+        'max_len': MAX_LEN,
+        'features': FEATURES,
+        'static_input_len': static_input_len
+    })
 
 @socketio.on('disconnect')
 def handle_disconnect():
@@ -207,5 +214,7 @@ def handle_frame_keypoints(data):
         })
 
 if __name__ == '__main__':
-    print(f"Starting Flask-SocketIO server at http://127.0.0.1:5000")
-    socketio.run(app, host='127.0.0.1', port=5000, debug=True, allow_unsafe_werkzeug=True)
+    # **FIXED for Render**: Read port from environment, bind to 0.0.0.0
+    port = int(os.environ.get('PORT', 5000))
+    print(f"Starting Flask-SocketIO server on 0.0.0.0:{port}")
+    socketio.run(app, host='0.0.0.0', port=port, debug=True, allow_unsafe_werkzeug=True)
