@@ -2,6 +2,5 @@ Flask
 Flask-SocketIO
 eventlet
 tensorflow-cpu
-opencv-python
-mediapipe
+
 numpy
